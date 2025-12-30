@@ -5,6 +5,7 @@ import SideBar from "./SideBar";
 import LoadingSpinner from "../LoadingSpinner";
 import Sidebar from "./SideBar";
 import RightSidebar from "./RightSidebar";
+import ProfilePage from "../ProfilePage";
 
 export const MainLayout = ({ children }: any) => {
   const { user, isLoading } = useAuth();
@@ -29,8 +30,8 @@ export const MainLayout = ({ children }: any) => {
         <Sidebar currentPage={currentPage} onNavigate={setCurrentPage} />
       </div>
       <main className="flex-1 max-w-2xl border-x border-gray-800">
-        {children}
-        {/* {currentPage === "profile" ? <ProfilePage /> : children} */}
+        {/* {children} */}
+        {currentPage === "profile" ? <ProfilePage /> : children}
       </main>
       <div className="hidden lg:block w-80 p-4">
         <RightSidebar />

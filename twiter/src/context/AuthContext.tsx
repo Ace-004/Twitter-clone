@@ -10,6 +10,9 @@ interface User {
   avatar: string;
   bio?: string;
   joinedDate: string;
+  email?: string;
+  website?: string;
+  location?: string;
 }
 
 interface AuthContextType {
@@ -51,6 +54,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
     setIsLoading(false);
   }, []);
+  
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     await new Promise((resolve) => setTimeout(resolve, 1000));
