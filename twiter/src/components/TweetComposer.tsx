@@ -1,28 +1,70 @@
-import React, { useState } from 'react'
-import { useAuth } from '../context/AuthContext'
-import { Card, CardContent } from './ui/card';
-import { Button } from './ui/button';
-import { Separator } from '@radix-ui/react-separator';
-import { BarChart3, Calendar, Globe, Image, MapPin, Smile } from 'lucide-react';
-import { Textarea } from './ui/textarea';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import React, { useState } from "react";
+import { useAuth } from "../context/AuthContext";
+import { Card, CardContent } from "./ui/card";
+import { Button } from "./ui/button";
+import { Separator } from "@radix-ui/react-separator";
+import { BarChart3, Calendar, Globe, Image, MapPin, Smile } from "lucide-react";
+import { Textarea } from "./ui/textarea";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import axiosInstance from "../lib/axiosInstance";
+import { on } from "events";
+import axios from "axios";
 
-const TweetComposer = () => {
-  const {user}= useAuth();
-  const [content,setContent]= useState('');
-  const maxlength=200;
-  const handleSubmit=async(e:React.FormEvent<HTMLFormElement>)=>{
-    e.preventDefault();
+const TweetComposer = ({ onTweetPosted }: any) => {
+  const { user } = useAuth();
+  const [content, setContent] = useState("");
+  const [isLoading, setIsLoading] = React.useState(false);
 
-  }
-  const characterCount= content.length;
-  const isOverLimit= characterCount> maxlength;
-  const isNearLimit= maxlength - characterCount <=20;
-  if(!user) return null;
-
+  const [imageurl, setImageurl] = useState('');
+  const maxlength = 200;
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault(); 
+    if(!user || !content.trim()) return;
+    try {
+      const tweetData: any = {
+        author: user?._id,
+        content,
+        image: imageurl
+      };
+      const response = await axiosInstance.post("/post", tweetData);
+      onTweetPosted(response.data);
+      setContent("");
+      setImageurl('');
+    } catch (error) {
+      console.error("Error posting tweet:", error); 
+    }finally {
+      setIsLoading(false);
+    }
+  };
+  const characterCount = content.length;
+  const isOverLimit = characterCount > maxlength;
+  const isNearLimit = maxlength - characterCount <= 20;
+  if (!user) return null;
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    // in real app, you would upload the photo to server or cloud storage
+    if (!e.target.files || e.target.files.length === 0) return;
+    setIsLoading(true);
+    const image = e.target.files[0];
+    const formdataImg = new FormData();
+    formdataImg.set("image", image);
+    try {
+      const res = await axios.post(
+        "https://api.imgbb.com/1/upload?key=79e03c45daa09f35a85fae151389946b",
+        formdataImg
+      );
+      const url = res.data.data.display_url;
+      if (url) {
+        setImageurl(url);
+      }
+    } catch (error) {
+      console.log("Image upload failed:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-     <Card className="bg-black border-gray-800 border-x-0 border-t-0 rounded-none">
+    <Card className="bg-black border-gray-800 border-x-0 border-t-0 rounded-none">
       <CardContent className="p-4">
         <div className="flex space-x-4">
           <Avatar className="h-12 w-12">
@@ -51,8 +93,8 @@ const TweetComposer = () => {
                       accept="image/*"
                       id="tweetImage"
                       className="hidden"
-                      // onChange={handlePhotoUpload}
-                      // disabled={isLoading}
+                      onChange={handlePhotoUpload}
+                      disabled={isLoading}
                     />
                   </label>
                   <Button
@@ -147,7 +189,7 @@ const TweetComposer = () => {
 
                     <Button
                       type="submit"
-                      // disabled={!content.trim() || isOverLimit|| isLoading}
+                      disabled={!content.trim() || isOverLimit|| isLoading}
                       className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-700 disabled:text-gray-500 text-white font-semibold rounded-full px-6"
                     >
                       Post
@@ -160,7 +202,7 @@ const TweetComposer = () => {
         </div>
       </CardContent>
     </Card>
-  )
-}
+  );
+};
 
-export default TweetComposer
+export default TweetComposer;

@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { Label } from "@radix-ui/react-label";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
+import axios from "axios";
 
 const Editprofile = ({ isOpen, onClose }: any) => {
   const { user, updateProfile } = useAuth();
@@ -18,6 +19,7 @@ const Editprofile = ({ isOpen, onClose }: any) => {
     bio: user?.bio || "",
     location: user?.location || "",
     website: user?.website || "",
+    avatar: user?.avatar || "",
   });
 
   if (!isOpen || !user) return null;
@@ -69,9 +71,25 @@ const Editprofile = ({ isOpen, onClose }: any) => {
     }
   };
 
-  const handlePhotoUpload = (type: "profile" | "cover") => {
+  const handlePhotoUpload = async(e:React.ChangeEvent<HTMLInputElement>) => {
     // in real app, you would upload the photo to server or cloud storage
-    alert(`Upload ${type} photo feature is not implemented in this mockup.`);
+    if(!e.target.files || e.target.files.length ===0) return;
+    setIsLoading(true);
+    const image = e.target.files[0];
+    const formdataImg = new FormData();
+    formdataImg.set("image", image);
+    try {
+      const res=await axios.post('https://api.imgbb.com/1/upload?key=79e03c45daa09f35a85fae151389946b',formdataImg);
+      const url=res.data.data.display_url;
+      if(url){
+        setFormData((prev) => ({ ...prev, avatar: url }));
+      }
+    } catch (error) {
+      console.log("Image upload failed:", error);
+    }finally{
+      setIsLoading(false);
+    }
+    // alert(`Upload  photo feature is not implemented in this mockup.`);
   };
 
   return <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
@@ -144,7 +162,7 @@ const Editprofile = ({ isOpen, onClose }: any) => {
                     accept="image/*"
                     id="avatarUpload"
                     className="hidden"
-                    // onChange={handlePhotoUpload}
+                    onChange={handlePhotoUpload}
                   />
                   <Button
                     type="button"

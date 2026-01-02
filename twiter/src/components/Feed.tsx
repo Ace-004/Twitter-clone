@@ -1,9 +1,10 @@
-import React, { useState } from 'react'
-import { Tabs, TabsList, TabsTrigger } from './ui/tabs';
-import LoadingSpinner from './LoadingSpinner';
-import { Card, CardContent } from './ui/card';
-import TweetCard from './TweetCard';
-import TweetComposer from './TweetComposer';
+import React, { useEffect, useState } from "react";
+import { Tabs, TabsList, TabsTrigger } from "./ui/tabs";
+import LoadingSpinner from "./LoadingSpinner";
+import { Card, CardContent } from "./ui/card";
+import TweetCard from "./TweetCard";
+import TweetComposer from "./TweetComposer";
+import axiosInstance from "../lib/axiosInstance";
 
 interface Tweet {
   id: string;
@@ -86,13 +87,31 @@ const tweets: Tweet[] = [
 ];
 
 const Feed = () => {
-  
-
-// const [tweets, setTweets] = useState<any>([]);
+  const [tweets, setTweets] = useState<any>([]);
   const [loading, setloading] = useState(false);
+  const fetchTweets = async () => {
+    try {
+      setloading(true);
+      const response = await axiosInstance.get("/post");
+      const data = response.data;
+      setTweets(data);
+      setloading(false);
+    } catch (error) {
+      console.error("Error fetching tweets:", error);
+    } finally {
+      setloading(false);
+    }
+  };
+  useEffect(()=>{
+    fetchTweets();
+  },[])
+
+  const handlenewtweet= (newtweet:any)=>{
+    setTweets((prevTweets:any)=> [newtweet,...prevTweets]);
+  }
 
   return (
-     <div className="min-h-screen">
+    <div className="min-h-screen">
       <div className="sticky top-0 bg-black/90 backdrop-blur-md border-b border-gray-800 z-10">
         <div className="px-4 py-3">
           <h1 className="text-xl font-bold text-white">Home</h1>
@@ -115,7 +134,7 @@ const Feed = () => {
           </TabsList>
         </Tabs>
       </div>
-      <TweetComposer />
+      <TweetComposer onTweetPosted={handlenewtweet} />
       <div className="divide-y divide-gray-800">
         {loading ? (
           <Card className="bg-black border-none">
@@ -127,11 +146,11 @@ const Feed = () => {
             </CardContent>
           </Card>
         ) : (
-          tweets.map((tweet: any) => <TweetCard key={tweet.id} tweet={tweet} />)
+          tweets.map((tweet: any) => <TweetCard key={tweet._id} tweet={tweet} />)
         )}
       </div>
     </div>
-  )
-}
+  );
+};
 
 export default Feed;

@@ -1,19 +1,23 @@
-import React, { useState } from "react";
-import { useAuth } from "../context/AuthContext";
-import { Button } from "./ui/button";
+"use client";
+
+import React, { useEffect, useState } from "react";
 import {
   ArrowLeft,
   Calendar,
-  Camera,
-  LinkIcon,
   MapPin,
+  Link as LinkIcon,
   MoreHorizontal,
+  Camera,
+  Settings,
 } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import { Button } from "./ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs";
-import { Card, CardContent } from "./ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import TweetCard from "./TweetCard";
+import { Card, CardContent } from "./ui/card";
 import Editprofile from "./Editprofile";
+import axiosInstance from "../lib/axiosInstance";
 
 interface Tweet {
   id: string;
@@ -94,18 +98,30 @@ const tweets: Tweet[] = [
       "https://images.pexels.com/photos/196645/pexels-photo-196645.jpeg?auto=compress&cs=tinysrgb&w=800",
   },
 ];
-
-const ProfilePage = () => {
+export default function ProfilePage() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("posts");
   const [showEditModal, setShowEditModal] = useState(false);
-  if (!user) return null;
-  // const [tweets, setTweets] = useState<any>([]);
-  const [loading, setloading] = useState(false);
 
-  const filtertweets = tweets.filter(
-    (tweet: any) => tweet.author.id === user.id
-  );
+  if (!user) return null;
+  const [tweets, setTweets] = useState<any>([]);
+  const [loading, setloading] = useState(false);
+  const fetchTweets = async () => {
+    try {
+      setloading(true);
+      const res = await axiosInstance.get("/post");
+      setTweets(res.data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setloading(false);
+    }
+  };
+  useEffect(() => {
+    fetchTweets();
+  }, []);
+  // Filter tweets by current user
+  const userTweets = tweets.filter((tweet: any) => tweet.author._id === user._id);
 
   return (
     <div className="min-h-screen">
@@ -121,7 +137,7 @@ const ProfilePage = () => {
           </Button>
           <div>
             <h1 className="text-xl font-bold text-white">{user.displayName}</h1>
-            <p className="text-sm text-gray-400">{filtertweets.length} posts</p>
+            <p className="text-sm text-gray-400">{userTweets.length} posts</p>
           </div>
         </div>
       </div>
@@ -139,7 +155,7 @@ const ProfilePage = () => {
         </div>
 
         {/* Profile Picture */}
-        <div className="absolute -bottom-10 left-4">
+        <div className="absolute -bottom-16 left-4">
           <div className="relative">
             <Avatar className="h-32 w-32 border-4 border-black">
               <AvatarImage src={user.avatar} alt={user.displayName} />
@@ -253,7 +269,7 @@ const ProfilePage = () => {
 
         <TabsContent value="posts" className="mt-0">
           <div className="divide-y divide-gray-800">
-            {loading ? (
+            { loading ? (
               <Card className="bg-black border-none">
                 <CardContent className="py-12 text-center">
                   <div className="text-gray-400">
@@ -265,7 +281,7 @@ const ProfilePage = () => {
                 </CardContent>
               </Card>
             ) : (
-              filtertweets.map((tweet: any) => (
+              userTweets.map((tweet:any) => (
                 <TweetCard key={tweet._id} tweet={tweet} />
               ))
             )}
@@ -325,11 +341,9 @@ const ProfilePage = () => {
         </TabsContent>
       </Tabs>
       <Editprofile
-        isOpen={showEditModal}
-        onClose={() => setShowEditModal(false)}
+        isopen={showEditModal}
+        onclose={() => setShowEditModal(false)}
       />
     </div>
   );
-};
-
-export default ProfilePage;
+}
